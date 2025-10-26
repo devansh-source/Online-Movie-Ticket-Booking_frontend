@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-// --- FIX: Import the configured api instance ---
-import api from '../utils/axiosConfig'; 
+// --- UPDATE: Import 'api' instead of 'axios' ---
+import api from '../utils/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+
 const MovieListPageAdmin = () => {
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
     const fetchMovies = useCallback(async () => {
         let userInfo = null;
         try {
@@ -25,7 +27,7 @@ const MovieListPageAdmin = () => {
                     Authorization: `Bearer ${userInfo.token}`,
                 },
             };
-            // --- FIX: Use api instance, not hardcoded axios.get ---
+            // --- UPDATE: Use the imported 'api' instance ---
             const { data } = await api.get('/movies', config);
             setMovies(data);
             setLoading(false);
@@ -34,9 +36,11 @@ const MovieListPageAdmin = () => {
             setLoading(false);
         }
     }, [navigate]);
+
     useEffect(() => {
         fetchMovies();
     }, [fetchMovies]);
+
     const deleteHandler = async (id) => {
         if (window.confirm('Are you sure you want to delete this movie?')) {
             let userInfo = null;
@@ -55,7 +59,7 @@ const MovieListPageAdmin = () => {
                         Authorization: `Bearer ${userInfo.token}`,
                     },
                 };
-                // --- FIX: Use api instance, not hardcoded axios.delete ---
+                // --- UPDATE: Use the imported 'api' instance ---
                 await api.delete(`/movies/${id}`, config);
                 alert('Movie Deleted!');
                 fetchMovies(); // Refresh list
@@ -67,6 +71,7 @@ const MovieListPageAdmin = () => {
     
     if (loading) return <div className="loading-container">Loading Admin Panel...</div>;
     if (error) return <div className="error-message">{error}</div>;
+
     return (
         <div className="admin-movie-list-page">
             <h1>Movie Management (Admin)</h1>
@@ -109,4 +114,5 @@ const MovieListPageAdmin = () => {
         </div>
     );
 };
+
 export default MovieListPageAdmin;

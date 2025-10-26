@@ -4,14 +4,20 @@ import io from 'socket.io-client';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useTranslation } from 'react-i18next';
+
+// --- ADD THIS LINE ---
+// Use the live Render URL for production, otherwise use localhost
+const SOCKET_URL = process.env.NODE_ENV === 'production'
+    ? 'https://online-movie-ticket-booking-backend.onrender.com'
+    : 'http://localhost:5000';
+// --- END OF ADD ---
+
 const stripePromise = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
     ? loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY)
     : Promise.resolve(null);
-// --- FIX: Dynamically set Socket.IO URL for production/development ---
-const SOCKET_URL = process.env.NODE_ENV === 'production'
-    ? (process.env.REACT_APP_API_URL || '/')
-    : 'http://localhost:5000';
+
 const PaymentForm = ({ totalPrice, onPaymentSuccess, onPaymentError }) => {
+    // ... (rest of the PaymentForm component is unchanged)
     const stripe = useStripe();
     const elements = useElements();
     const [loading, setLoading] = useState(false);
@@ -48,19 +54,18 @@ const SeatSelector = ({ movie, showtime, navigate }) => {
     const [pendingSeats, setPendingSeats] = useState(new Set(showtime.pendingSeats || []));
     const [bookedSeats, setBookedSeats] = useState(new Set(showtime.bookedSeats || []));
     const [pendingBookingId, setPendingBookingId] = useState(null);
-    
-    // --- FIX: Changed from 'useState' to 'const' since it never changes ---
-    const paymentMethod = 'online'; 
-    
+    const paymentMethod = 'online'; // Changed from useState
     const [showPayment, setShowPayment] = useState(false);
     const { t } = useTranslation();
-    // Extract dynamic screen dimensions
     const { rows, cols, screenName } = showtime.screenDetails;
     const totalPrice = (selectedSeats.length * seatPrice).toFixed(2);
+    
     // Socket.IO setup
     useEffect(() => {
-        // --- FIX: Use dynamic SOCKET_URL ---
-        const newSocket = io(SOCKET_URL); 
+        // --- UPDATE THIS LINE ---
+        const newSocket = io(SOCKET_URL); // Use the dynamic URL
+        // --- END OF UPDATE ---
+
         setSocket(newSocket);
         newSocket.emit('join-showtime', showtime._id);
         newSocket.on('seat-update', (data) => {
@@ -70,6 +75,7 @@ const SeatSelector = ({ movie, showtime, navigate }) => {
         return () => newSocket.close();
     }, [showtime._id]);
     
+    // ... (rest of the SeatSelector component is unchanged)
     // Helper to generate seat labels (A1, A2, B1, B2...)
     const getRowLabel = (index) => String.fromCharCode(65 + index); // 65 is 'A'
     // --- Utility Functions ---
@@ -202,7 +208,7 @@ const SeatSelector = ({ movie, showtime, navigate }) => {
         else if (isPending) seatClass += ' pending';
         else if (isSelected) seatClass += ' selected';
         else seatClass += ' available';
-        // --- FIX: Set grid column to 'number + 1' to account for the label column ---
+        // Applying inline style for grid column placement (Responsive)
         const gridStyle = {
             gridColumn: number + 1,
         };
@@ -223,13 +229,12 @@ const SeatSelector = ({ movie, showtime, navigate }) => {
             <div className="screen-indicator">Screen</div>
             {/* Seat Map Grid */}
             <div className="seat-map-wrapper">
-                {/* --- FIX: Set template columns to 'auto' (for labels) + 'repeat(cols, 1fr)' (for seats) --- */}
                 <div className="seat-grid" style={{ gridTemplateColumns: `auto repeat(${cols}, 1fr)` }}>
                     {Array.from({ length: rows }, (_, rowIndex) => {
                         const rowLabel = getRowLabel(rowIndex);
                         return (
                             <React.Fragment key={rowLabel}>
-                                {/* --- FIX: Explicitly place label in column 1 --- */}
+                                {/* Row Label Column */}
                                 <div className="row-label" style={{ gridColumn: 1 }}>{rowLabel}</div> 
                                 {/* Seats for the Row */}
                                 {Array.from({ length: cols }, (_, colIndex) => colIndex + 1).map(number =>
