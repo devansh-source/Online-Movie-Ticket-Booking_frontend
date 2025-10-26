@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+// --- FIX: Import the configured api instance ---
+import api from '../utils/axiosConfig'; 
 import { useNavigate } from 'react-router-dom';
-
 const MovieListPageAdmin = () => {
     const [movies, setMovies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
     const fetchMovies = useCallback(async () => {
         let userInfo = null;
         try {
@@ -15,7 +14,6 @@ const MovieListPageAdmin = () => {
         } catch (e) {
             console.warn('localStorage access blocked or invalid data');
         }
-
         if (!userInfo || !userInfo.isAdmin) {
             alert('Access Denied. Admin privileges required.');
             return navigate('/');
@@ -27,8 +25,8 @@ const MovieListPageAdmin = () => {
                     Authorization: `Bearer ${userInfo.token}`,
                 },
             };
-            // Uses the public GET route, but we use the token to check admin status if needed
-            const { data } = await axios.get('http://localhost:5000/api/movies', config);
+            // --- FIX: Use api instance, not hardcoded axios.get ---
+            const { data } = await api.get('/movies', config);
             setMovies(data);
             setLoading(false);
         } catch (err) {
@@ -36,11 +34,9 @@ const MovieListPageAdmin = () => {
             setLoading(false);
         }
     }, [navigate]);
-
     useEffect(() => {
         fetchMovies();
     }, [fetchMovies]);
-
     const deleteHandler = async (id) => {
         if (window.confirm('Are you sure you want to delete this movie?')) {
             let userInfo = null;
@@ -59,8 +55,8 @@ const MovieListPageAdmin = () => {
                         Authorization: `Bearer ${userInfo.token}`,
                     },
                 };
-
-                await axios.delete(`http://localhost:5000/api/movies/${id}`, config);
+                // --- FIX: Use api instance, not hardcoded axios.delete ---
+                await api.delete(`/movies/${id}`, config);
                 alert('Movie Deleted!');
                 fetchMovies(); // Refresh list
             } catch (err) {
@@ -71,7 +67,6 @@ const MovieListPageAdmin = () => {
     
     if (loading) return <div className="loading-container">Loading Admin Panel...</div>;
     if (error) return <div className="error-message">{error}</div>;
-
     return (
         <div className="admin-movie-list-page">
             <h1>Movie Management (Admin)</h1>
@@ -114,5 +109,4 @@ const MovieListPageAdmin = () => {
         </div>
     );
 };
-
 export default MovieListPageAdmin;
